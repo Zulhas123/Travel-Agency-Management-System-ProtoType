@@ -310,7 +310,15 @@
         user: null,
         sidebarOpen: false,
         route: { page: "login" },
-        agency: { name: "Bangladesh Travel Pro", currency: "BDT", vatRate: 0.05 },
+        agency: {
+          name: "Bangladesh Travel Pro",
+          currency: "BDT",
+          vatRate: 0.05,
+          hotlineLabel: "24/7 Hotline",
+          phone: "+8801700000000",
+          email: "support@bangladeshtravelpro.com",
+          portalUrl: "https://bangladeshtravelpro.com/login",
+        },
       },
       db: {
         users,
@@ -908,6 +916,11 @@
 
   const renderLogin = () => {
     const roleOptions = ROLES.filter((r) => r.id !== "customer").map((r) => `<option value="${r.id}">${escapeHtml(r.label)}</option>`).join("");
+    const ag = state.session.agency;
+    const tel = `tel:${ag.phone}`;
+    const mail = `mailto:${ag.email}`;
+    const qrTel = window.QR?.toSvg(tel, { ecc: "L", scale: 4, border: 2 }) || "";
+    const qrPortal = window.QR?.toSvg(ag.portalUrl, { ecc: "L", scale: 4, border: 2 }) || "";
     return `
       <div class="auth">
         <div class="authCard">
@@ -925,7 +938,37 @@
               </div>
             </div>
             <div class="callout">
-              Covers MVP modules from the provided SRS: packages, bookings, payments, accounting, vendors, inquiries, SMS, logs, and role-based access.
+              <div class="qrGrid">
+                <div class="qrCard">
+                  <div class="qrCard__top">
+                    <div>
+                      <div style="font-weight:800; font-size:13px;">${escapeHtml(ag.hotlineLabel)}</div>
+                      <div class="qrCard__label">${escapeHtml(ag.phone)}</div>
+                    </div>
+                    <div class="qrBox" aria-label="QR code for hotline call">${qrTel}</div>
+                  </div>
+                  <div class="actions">
+                    <a class="btn btn--small btn--primary" href="${escapeHtml(tel)}">Call hotline</a>
+                    <a class="btn btn--small" href="${escapeHtml(mail)}">Email support</a>
+                  </div>
+                  <div class="qrHint">Scan the QR to call from a mobile device.</div>
+                </div>
+
+                <div class="qrCard">
+                  <div class="qrCard__top">
+                    <div>
+                      <div style="font-weight:800; font-size:13px;">Login Portal</div>
+                      <div class="qrCard__label">${escapeHtml(ag.portalUrl)}</div>
+                    </div>
+                    <div class="qrBox" aria-label="QR code for login portal">${qrPortal}</div>
+                  </div>
+                  <div class="actions">
+                    <a class="btn btn--small btn--primary" href="${escapeHtml(ag.portalUrl)}" target="_blank" rel="noreferrer">Open portal</a>
+                    <button class="btn btn--small" type="button" id="btnCopyPortal">Copy link</button>
+                  </div>
+                  <div class="qrHint">Scan the QR to open the login portal.</div>
+                </div>
+              </div>
             </div>
             <div class="chipRow">
               <div class="chip"><strong>Currency</strong> BDT</div>
@@ -2967,6 +3010,15 @@
         password: String(fd.get("password")),
         role: String(fd.get("role") || "admin"),
       });
+    });
+    el("#btnCopyPortal")?.addEventListener("click", async () => {
+      const url = state.session.agency.portalUrl;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast("Copied", "Login portal link copied to clipboard.");
+      } catch {
+        toast("Copy failed", url);
+      }
     });
   };
 
